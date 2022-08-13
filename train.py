@@ -1,6 +1,6 @@
 import argparse
 
-from .data_utils import pc_and_sample
+from data_utils import pc_and_sample
 
 ######################################################################################
 # RDGNN Rewrite for training method. 
@@ -36,15 +36,6 @@ if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(
         description='Train for precond classification directly from images.')
-    argparse.add_common_args_to_parser(parser,
-                              cuda=True,
-                              result_dir=True,
-                              num_epochs=True,
-                              batch_size=True,
-                              lr=True,
-                              save_freq_iters=True,
-                              log_freq_iters=True,
-                              print_freq_iters=True)
                               
 
     parser.add_argument('--train_data_dir', required=True, action='append',
