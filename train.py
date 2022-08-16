@@ -1,6 +1,10 @@
 import argparse
-
 from data_utils import pc_and_sample
+import sys 
+
+from RDGNN import RDGNN
+from RDGNN_Config import RDGNN_Config
+from Dataloader import Dataloader
 
 ######################################################################################
 # RDGNN Rewrite for training method. 
@@ -20,7 +24,25 @@ from data_utils import pc_and_sample
 #######################################################################################
 def main(args : argparse.Namespace) -> None :
 
+    #Create point clouds and sample them from collected gym data.
     pc_and_sample(args.train_data_dir)
+
+    dataloader = Dataloader(args.train_data_dir)
+    rdgnn = RDGNN(RDGNN_Config())
+
+    for epoch in range(args.epochs):
+        loss = rdgnn.run_model(dataloader)
+        rdgnn.update_weights()
+
+        sys.stdout.write(f"Epoch {epoch} with loss {loss}")
+        if epoch % 10 == 0:
+            sys.stdout.write('\n')
+        else:
+            sys.stdout.write('\r')
+
+    sys.stdout.write('\n')
+
+
        
 
 
@@ -35,11 +57,12 @@ def main(args : argparse.Namespace) -> None :
 if __name__ == "__main__":
     
     parser = argparse.ArgumentParser(
-        description='Train for precond classification directly from images.')
+        description='Train for dynamics model from isaacgym data which records sensor data and actions.')
                               
 
     parser.add_argument('--train_data_dir', required=True, action='append',
                         help='Path to directory of demos from gym.')
+    parser.add_argument('--epochs', required=False, type=int, default=100)
 
     args = parser.parse_args()
     main(args)

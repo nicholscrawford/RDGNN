@@ -21,7 +21,7 @@ def pc_and_sample(path_list):
                 data, attributes = pickle.load(file)
                 
                 #Check if the data has been processed before,
-                if not hasattr(attributes, "rdgnn_ready"):
+                if "rdgnn_ready" not in attributes.keys():
                     create_pointcloud(data)
                     sample_pointcloud(data)
 
@@ -33,11 +33,11 @@ def pc_and_sample(path_list):
 
                 #Print progress bar
                 sys.stdout.write('\r')
-                sys.stdout.write("[{:{}}] {:.1f}%".format("="*i, n-1, (100/(n-1)*i)))
+                sys.stdout.write("[{:{}}] {:.1f}%".format("="*i, n, (100/(n)*i)))
                 sys.stdout.flush()
                 i += 1
-    print('\n')
-    print(f"{Fore.LIGHTGREEN_EX}{Back.BLACK}[INFO] Data processing complete{Style.RESET_ALL}")
+    print()
+    print(f"{Fore.LIGHTGREEN_EX}{Back.BLACK}[INFO] Data processed{Style.RESET_ALL}")
 
 
 def create_pointcloud(data: dict):
