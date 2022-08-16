@@ -8,3 +8,4 @@ class RDGNN_Config:
 
     
     one_hot_encoding_dim: int = 4
+    max_objects: int = 8

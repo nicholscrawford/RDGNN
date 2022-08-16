@@ -15,9 +15,9 @@ class RDGNN():
     # All permanent state should be in config.
     def __init__(self, config: RDGNN_Config) -> None:
         self.config = config
-        total_objects =10
+
         self.one_hot_encoding_embed_model = nn.Sequential(
-                    nn.Linear(total_objects, self.config.one_hot_encoding_dim),
+                    nn.Linear(self.config.max_objects, self.config.one_hot_encoding_dim),
                     nn.ReLU(inplace=True),
                     nn.Linear(self.config.one_hot_encoding_dim, self.config.one_hot_encoding_dim)
                 )
@@ -34,21 +34,33 @@ class RDGNN():
         data = dataloader.get_next()
 
         timesteps = [0, -1]
-        pointcloud_embedding_list = []
+        pc_and_ohe_embedding_list = []
         for timestep in timesteps:
+            
+            # Create Point Cloud Embeddings
             pointclouds = data['point_clouds'][timestep]
             reshaped_pointclouds = []
             for object in data["objects"].keys():
                 objectpc = pointclouds[object].T
                 reshaped_pointclouds.append(objectpc)
-
-                #embed model takes [3, 3, 128] for 3 objects, three data, and 128 of each
-                #num objects should then be part of the confg for now.
-
+                #embed model takes [x, 3, 128] for x objects, three data, and 128 of each
             pointclouds_tensor = torch.FloatTensor(np.array(reshaped_pointclouds))
             pointcloud_embedding = self.point_embed_model(pointclouds_tensor)
-            pointcloud_embedding_list.append(pointcloud_embedding)
 
+            # Create One Hot Encodings
+            ##TODO: Static encoding for environment
+            A = np.arange(self.config.max_objects)
+            np.random.shuffle(A)
+            select_obj_num_range = A[:len(data['objects'].keys())]
+            one_hot_encoding = np.zeros((len(data['objects'].keys()), self.config.max_objects))
+            for i in range(len(select_obj_num_range)):
+                one_hot_encoding[i][select_obj_num_range[i]] = 1
+
+            one_hot_encoding_tensor = torch.Tensor(np.array(one_hot_encoding))
+            one_hot_encoding_embedding = self.one_hot_encoding_embed_model(one_hot_encoding_tensor)
+            #print('latent_one_hot_encoding, img_emb_single', [latent_one_hot_encoding.shape, img_emb_single.shape])
+            pc_and_ohe_embedding = torch.cat([pointcloud_embedding, one_hot_encoding_embedding], dim = 1)
+            pc_and_ohe_embedding_list.append(pc_and_ohe_embedding)
 
     def update_weights(self) -> None:
         pass
