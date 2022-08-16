@@ -113,4 +113,5 @@ def sample_pointcloud(data: dict):
         for object_name in data["objects"]:
             pc = data["point_clouds"][timestep_idx][object_name]
             farthest_indices,_ = farthest_point_sampling(pc, sampling_number)
-            data["point_clouds"][timestep_idx][object_name] = farthest_indices
+            sampled_pc = pc[farthest_indices.squeeze()]
+            data["point_clouds"][timestep_idx][object_name] = sampled_pc

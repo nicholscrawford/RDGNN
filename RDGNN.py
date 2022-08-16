@@ -6,6 +6,8 @@ from Dataloader import Dataloader
 from RDGNN_Config import RDGNN_Config
 
 from PointConv import PointConv
+import torch
+import numpy as np
 
 class RDGNN():
 
@@ -32,10 +34,20 @@ class RDGNN():
         data = dataloader.get_next()
 
         timesteps = [0, -1]
+        pointcloud_embedding_list = []
+        for timestep in timesteps:
+            pointclouds = data['point_clouds'][timestep]
+            reshaped_pointclouds = []
+            for object in data["objects"].keys():
+                objectpc = pointclouds[object].T
+                reshaped_pointclouds.append(objectpc)
 
-        for object in data["objects"].keys():
-            
-            pointcloud_embedding = self.point_embed_model(data["point_clouds"][0][object])
+                #embed model takes [3, 3, 128] for 3 objects, three data, and 128 of each
+                #num objects should then be part of the confg for now.
+
+            pointclouds_tensor = torch.FloatTensor(np.array(reshaped_pointclouds))
+            pointcloud_embedding = self.point_embed_model(pointclouds_tensor)
+            pointcloud_embedding_list.append(pointcloud_embedding)
 
 
     def update_weights(self) -> None:
