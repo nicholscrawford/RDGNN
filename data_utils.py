@@ -5,6 +5,10 @@ from farthest_point_sampling import farthest_point_sampling
 import sys
 from colorama import Fore, Back, Style
 
+from torch_geometric.data import Data, Batch
+from itertools import permutations
+import torch
+
 #Check if data has been processed, and if it hasn't process it.
 def pc_and_sample(path_list):
     print(f"{Fore.LIGHTGREEN_EX}{Back.BLACK}[INFO] Generating point clouds and sampling{Style.RESET_ALL}")
@@ -115,3 +119,17 @@ def sample_pointcloud(data: dict):
             farthest_indices,_ = farthest_point_sampling(pc, sampling_number)
             sampled_pc = pc[farthest_indices.squeeze()]
             data["point_clouds"][timestep_idx][object_name] = sampled_pc
+
+
+def create_graph(self, num_nodes, node_pose, edge_feature, action) -> Data:
+    nodes = list(range(num_nodes))
+    # Create a completely connected graph
+    edges = list(permutations(nodes, 2))
+    edge_index = torch.LongTensor(np.array(edges).T)
+    x = node_pose#torch.zeros((num_nodes, node_inp_size))#torch.eye(node_inp_size).float()
+    edge_attr = edge_feature #torch.rand(len(edges), edge_size)
+
+    data = Data(x=x, edge_index=edge_index, edge_attr=edge_attr, action = action)
+    # Recreate x as target
+    data.y = x
+    return data

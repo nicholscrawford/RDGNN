@@ -30,4 +30,4 @@ class Dataloader():
             data, attributes = pickle.load(file)
 
         self.current_file_idx += 1
-        return data
+        return data, attributes
