@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List
 
 @dataclass
@@ -10,4 +10,6 @@ class RDGNN_Config:
     
     one_hot_encoding_dim: int = 4
     max_objects: int = 8
-    environment_object_names: List = ['table']
+    environment_object_names: List = field(default_factory=lambda : ['table'])
+    node_emb_size: int = 128
+    edge_emb_size: int = 128

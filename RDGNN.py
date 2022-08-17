@@ -10,6 +10,7 @@ from PointConv import PointConv
 import torch
 import numpy as np
 from data_utils import create_graph
+from GNNOptionalEdge import GNNModelOptionalEdge
 
 class RDGNN():
 
@@ -26,9 +27,43 @@ class RDGNN():
 
         self.point_embed_model = PointConv(normal_channel=False)
 
-        self.graph_encoding_model = ()
+        self.graph_encoding_model = GNNModelOptionalEdge(
+                    self.config.node_emb_size, 
+                    self.config.edge_emb_size,
+                    node_output_size = self.config.node_emb_size, 
+                    predict_edge_output = True,
+                    edge_output_size = self.config.edge_emb_size,
+                    graph_output_emb_size=16, 
+                    node_emb_size=self.config.node_emb_size, 
+                    edge_emb_size=self.config.edge_emb_size,
+                    message_output_hidden_layer_size=128,  
+                    message_output_size=128, 
+                    node_output_hidden_layer_size=64,
+                    all_classifier = False,
+                    predict_obj_masks=False,
+                    predict_graph_output=False,
+                    use_edge_embedding = False,
+                    use_edge_input = False
+        )
 
-        self.graph_decoder = ()
+        self.graph_decoder = GNNModelOptionalEdge(
+                    self.config.node_emb_size, 
+                    self.config.edge_emb_size,
+                    node_output_size = self.config.node_inp_size, 
+                    predict_edge_output = True,
+                    edge_output_size = self.config.edge_inp_size,
+                    graph_output_emb_size=16, 
+                    node_emb_size=self.config.node_emb_size, 
+                    edge_emb_size=self.config.edge_emb_size,
+                    message_output_hidden_layer_size=128,  
+                    message_output_size=128, 
+                    node_output_hidden_layer_size=64,
+                    all_classifier = False,
+                    predict_obj_masks=False,
+                    predict_graph_output=False,
+                    use_edge_embedding = False,
+                    use_edge_input = True
+                )
 
     
     #Trains model given a dataloader.
@@ -96,7 +131,7 @@ class RDGNN():
                 exit   
 
 
-            #Create Graph
+            #Create Graph Size?
             data = create_graph(self, len(data['objects']), pc_and_ohe_embedding, None, action)
 
 
@@ -107,7 +142,7 @@ class RDGNN():
             outs = self.classif_model(batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.action)
             
             
-            data_1_decoder = self.create_graph(self.num_nodes, self.node_emb_size, outs['pred'], self.edge_emb_size, outs['pred_edge'], action)
+            data_1_decoder = self.create_graph(self.num_nodes, self.config.node_emb_size, outs['pred'], self.edge_emb_size, outs['pred_edge'], action)
             
             batch_decoder = Batch.from_data_list([data_1_decoder]).to(device)
             
