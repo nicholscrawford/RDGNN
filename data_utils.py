@@ -121,7 +121,7 @@ def sample_pointcloud(data: dict):
             data["point_clouds"][timestep_idx][object_name] = sampled_pc
 
 
-def create_graph(self, num_nodes, node_pose, edge_feature, action) -> Data:
+def create_graph(num_nodes, node_pose, edge_feature, action) -> Data:
     nodes = list(range(num_nodes))
     # Create a completely connected graph
     edges = list(permutations(nodes, 2))

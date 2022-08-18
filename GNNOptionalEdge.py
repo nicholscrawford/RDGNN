@@ -13,7 +13,7 @@ class GNNModelOptionalEdge(MessagePassing):
                  edge_inp_size,
                  node_output_size, 
                  relation_output_size, 
-                 max_objects = 5, 
+                 max_objects = 8, 
                  graph_output_emb_size=16, 
                  node_emb_size=32, 
                  edge_emb_size=32,
@@ -33,8 +33,8 @@ class GNNModelOptionalEdge(MessagePassing):
                  use_shared_latent_embedding = False,
                  use_seperate_latent_embedding = False,
                  use_env_data = False):
-        self.relation_output_size = relation_output_size
         # define the relation_output_size by hand for all baselines. 
+        self.relation_output_size = relation_output_size
         # Make sure all the planning stuff keeps the same for all our comparison approaches. 
         super(GNNModelOptionalEdge, self).__init__(aggr='mean')
         # all edge output will be classifier
