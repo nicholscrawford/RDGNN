@@ -123,9 +123,11 @@ class RDGNN():
 
             #Create action
             #Not sure about required size? How should actions be encoded exactly
-            if(attrs['behavior_params']['']['type'] == "PushObject"):
+            if(True):#(attrs['behavior_params']['']['type'] == "PushObject"):
                 action = np.zeros(8)
-                target_object = attrs['behavior_params']['']['target_object']
+                #target_object = attrs['behavior_params']['']['target_object']
+                #Currently not working for some reason. TODO: Invesitgate
+                target_object = np.random.choice(["block_1", "block_2", "block_3"])
                 target_id = attrs['segmentation_labels'].index(target_object)#Assumption about ordering is here too
                 action[list(ids.values())[target_id]] = 1
                 for i in range(3):
