@@ -1,10 +1,14 @@
 import argparse
-from data_utils import pc_and_sample
-import sys 
+import os
+import sys
 
+import torch
+from colorama import Back, Fore, Style
+
+from data_utils import pc_and_sample
+from Dataloader import Dataloader
 from RDGNN import RDGNN
 from RDGNN_Config import RDGNN_Config
-from Dataloader import Dataloader
 
 ######################################################################################
 # RDGNN Rewrite for training method. 
@@ -41,6 +45,13 @@ def main(args : argparse.Namespace) -> None :
             sys.stdout.write('\r')
 
     sys.stdout.write('\n')
+    if not os.path.exists(args.checkpoint_dir):
+        os.makedirs(args.checkpoint_dir)
+
+    path = os.path.join(args.checkpoint_dir, "saved_model.pkl")
+    torch.save(rdgnn, path)
+    print(f'{Fore.GREEN}{Back.BLACK}[INFO] Saving model to: {args.checkpoint_dir}{Style.RESET_ALL}')
+
 
 
        
@@ -62,7 +73,7 @@ if __name__ == "__main__":
 
     parser.add_argument('--train_data_dir', required=True, action='append',
                         help='Path to directory of demos from gym.')
-    parser.add_argument('--epochs', required=False, type=int, default=100)
-
+    parser.add_argument('--epochs', required=False, type=int, default=80)
+    parser.add_argument('--checkpoint_dir', type=str, required=True)
     args = parser.parse_args()
     main(args)
