@@ -32,7 +32,7 @@ def main(args : argparse.Namespace) -> None :
 
     for epoch in range(args.epochs):
         loss = rdgnn.run_model(dataloader)
-        rdgnn.update_weights()
+        rdgnn.update_weights(loss)
 
         sys.stdout.write(f"Epoch {epoch} with loss {loss}")
         if epoch % 10 == 0:

@@ -3,6 +3,7 @@ from typing import Dict, List, OrderedDict
 
 from torch import nn
 from torch_geometric.data import Batch
+import torch.optim as optim
 
 from Dataloader import Dataloader
 from RDGNN_Config import RDGNN_Config
@@ -22,6 +23,7 @@ class RDGNN():
 
         self.bceloss = nn.BCELoss()
         self.mseloss = nn.MSELoss()
+        self.dynamics_loss = nn.MSELoss()
 
         self.one_hot_encoding_embed_model = nn.Sequential(
                     nn.Linear(self.config.max_objects, self.config.one_hot_encoding_dim),
@@ -71,7 +73,17 @@ class RDGNN():
                     use_edge_input = True
                 )
 
-    
+        self.opt_emb = optim.Adam(self.point_embed_model.parameters(), lr=1e-4)
+        self.opt_classif = optim.Adam(self.graph_encoding_model.parameters(), lr=1e-4) # yixuan test
+        self.opt_classif_decoder = optim.Adam(self.graph_decoding_model.parameters(), lr=1e-4) # yixuan test
+        #if self.pointconv_baselines:
+        #    self.opt_pointconv_sigmoid = optim.Adam(self.pointconv_sigmoid_relations.parameters(), lr=1e-4) 
+        #if self.use_graph_dynamics:
+        #    self.opt_classif_dynamics = optim.Adam(self.classif_model_dynamics.parameters(), lr=1e-4) # yixuan test
+        #if self.graph_dynamics_graph_relations:
+        #    self.opt_dynamics = optim.Adam(self.dynamics_model.parameters(), lr=1e-4) # yixuan test
+
+
     #Trains model given a dataloader.
     def run_model(self, dataloader: Dataloader ) -> int:
         loss = 0
@@ -172,13 +184,29 @@ class RDGNN():
         #Added loss for latent state normalization
         loss += self.mseloss(outs_list[0]['pred_embedding'], outs_list[1]['current_embed'])
         #Added loss for edge latent state normalization
+        loss += self.dynamics_loss(outs_list[0]['pred_edge_embed'], outs_list[1]['edge_embed'])
 
         #Added loss for edge latent state relational predictions??
 
         return loss
 
-    def update_weights(self) -> None:
-        pass
+    def update_weights(self, loss) -> None:
+        self.opt_emb.zero_grad()
+        self.opt_classif.zero_grad()
+        self.opt_classif_decoder.zero_grad()
+
+        loss.backward()
+        
+        #if args.emb_lr >= 1e-5:
+            #if 'all_object_pairs' in args.train_type:
+                # raise ValueError("Not frozen")
+                #print("Not frozen")
+            #self.opt_emb.step()
+        self.opt_emb.step()
+        self.opt_classif.step()
+        self.opt_classif_decoder.step()
+        #if self.use_graph_dynamics:
+        #   self.opt_classif_dynamics.step()
 
     #Returns relations for a given sample
     def predict_relations(self, data :Dict, action :List) -> List:
