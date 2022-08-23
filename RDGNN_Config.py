@@ -13,4 +13,4 @@ class RDGNN_Config:
     one_hot_encoding_dim: int = 128
     node_emb_size: int = 128
     edge_emb_size: int = 128
-    relation_output_size: int = 16
+    relation_output_size: int = 10

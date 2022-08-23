@@ -1,3 +1,4 @@
+from re import T
 from typing import Dict, List, OrderedDict
 
 from torch import nn
@@ -18,6 +19,9 @@ class RDGNN():
     # All permanent state should be in config.
     def __init__(self, config: RDGNN_Config) -> None:
         self.config = config
+
+        self.bceloss = nn.BCELoss()
+        self.mseloss = nn.MSELoss()
 
         self.one_hot_encoding_embed_model = nn.Sequential(
                     nn.Linear(self.config.max_objects, self.config.one_hot_encoding_dim),
@@ -70,11 +74,12 @@ class RDGNN():
     
     #Trains model given a dataloader.
     def run_model(self, dataloader: Dataloader ) -> int:
+        loss = 0
         data, attrs = dataloader.get_next()
         device = torch.device("cpu")
 
         timesteps = [0, -1]
-        pc_and_ohe_embedding_list = []
+        outs_list = []
         for timestep in timesteps:
             
             # Create Point Cloud Embeddings
@@ -139,16 +144,18 @@ class RDGNN():
             action = torch.FloatTensor(action)
             action.to(device)
 
-            #Create Graph Size?
+            #Create Graph 
+            # Size?
             object_graph = create_graph(len(data['objects']), pc_and_ohe_embedding, None, action)
 
 
 
-            #Run model fr fr
-            batch = Batch.from_data_list([object_graph]).to(device)
-            #print(batch)
-            outs = self.graph_encoding_model(batch.x, batch.edge_index, batch.edge_attr, batch.batch, batch.action)
+            # Create batch
+            # TODO: Implement real batching
+            object_graph_batch = Batch.from_data_list([object_graph]).to(device)
             
+            outs = self.graph_encoding_model(object_graph_batch.x, object_graph_batch.edge_index, object_graph_batch.edge_attr, object_graph_batch.batch, object_graph_batch.action)
+            outs_list.append(outs)
             
             data_1_decoder = create_graph(len(data['objects']), outs['pred'], outs['pred_edge'], action)
             
@@ -156,7 +163,19 @@ class RDGNN():
             
             outs_decoder = self.graph_decoding_model(batch_decoder.x, batch_decoder.edge_index, batch_decoder.edge_attr, batch_decoder.batch, batch_decoder.action)
             
-            
+            #Add to loss for error in relation prediction
+            gt_relations = torch.FloatTensor(np.zeros((12,16)))
+            gt_relations = self.get_relations(data, 0)
+            loss += self.bceloss(outs_decoder['pred_sigmoid'][:], gt_relations)
+
+        #Hardcoded for one-behavior actions
+        #Added loss for latent state normalization
+        loss += self.mseloss(outs_list[0]['pred_embedding'], outs_list[1]['current_embed'])
+        #Added loss for edge latent state normalization
+
+        #Added loss for edge latent state relational predictions??
+
+        return loss
 
     def update_weights(self) -> None:
         pass
@@ -165,4 +184,22 @@ class RDGNN():
     def predict_relations(self, data :Dict, action :List) -> List:
         pass
 
-    
+    #Gets relation array given data
+    def get_relations(self, data :Dict, timestep) -> torch.FloatTensor:
+        #relations= np.zeros((len(data['relations']*(len(data['relations'])-1),16)))
+        total_relations = []
+        pair_idx = 0
+        for object1 in data['relations']:
+            for object2 in data['relations'][object1]:
+                
+                if object1 == object2:
+                    continue
+
+                pair_relations = data['relations'][object1][object2]
+                total_relations.append([])
+                for relation in pair_relations:
+                    total_relations[pair_idx].append(pair_relations[relation][timestep])
+                
+                pair_idx += 1
+
+        return torch.FloatTensor(np.array(total_relations))
